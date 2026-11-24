@@ -46,146 +46,303 @@
 
         /* Typography */
         h1 { 
-            color: #fceea7; font-size: 56px; margin: 0; font-weight: 400; 
-            letter-spacing: 6px; 
-            text-shadow: 0 0 50px rgba(252, 238, 167, 0.6); 
-            background: linear-gradient(to bottom, #fff, #eebb66);
+            color: #fceea7; font-size: clamp(26px, 4.6vw, 52px); margin: 0; font-weight: 400; 
+            letter-spacing: 5px; text-align: center; padding: 0 56px;
+            text-shadow: 0 0 40px rgba(252, 238, 167, 0.55); 
+            background: linear-gradient(to bottom, #ffffff, var(--accent-light, #eebb66));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-family: 'Cinzel', 'Times New Roman', serif;
-            opacity: 0.9;
+            font-family: 'Cinzel', 'Songti SC', 'STSong', 'Times New Roman', serif;
+            opacity: 0.94;
             transition: opacity 0.5s ease;
-        }
-
-        /* Controls */
-        .controls-wrapper {
-            position: absolute; 
-            top: 30px;          
-            right: 30px;        
             pointer-events: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-            z-index: 20;
-            transition: opacity 0.5s ease;
+            cursor: pointer;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 10px;
+        /* 实时手势识别反馈徽章 */
+        #gesture-badge {
+            margin-top: 10px;
+            padding: 5px 14px;
+            border-radius: 999px;
+            background: rgba(14, 14, 22, 0.68);
+            border: 1px solid rgba(255, 224, 150, 0.45);
+            color: #fff2cc;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
         }
+        #gesture-badge.active { opacity: 1; transform: translateY(0); }
 
-        .upload-btn {
-            background: rgba(20, 20, 20, 0.6); 
-            border: 1px solid rgba(212, 175, 55, 0.4); 
-            color: #d4af37; 
-            padding: 10px 20px; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            font-size: 10px;
-            transition: all 0.4s;
+        /* 右上角纯净欣赏/截图隐藏按钮 */
+        #pure-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 80;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 224, 150, 0.35);
+            background: rgba(14, 14, 20, 0.55);
+            color: #f3dc98;
+            font-size: 16px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(5px);
-            min-width: 120px;
+            backdrop-filter: blur(8px);
+            transition: all 0.25s ease;
         }
-        .upload-btn:hover { 
-            background: #d4af37; 
-            color: #000; 
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        #pure-btn:hover { background: rgba(212, 175, 55, 0.3); transform: scale(1.06); }
+        body.pure-mode #bottom-dock,
+        body.pure-mode #gesture-status,
+        body.pure-mode #webcam-wrapper,
+        body.pure-mode #gesture-badge {
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
-        
-        .hint-text {
-            color: rgba(212, 175, 55, 0.5);
-            font-size: 9px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-align: right;
-            margin-top: 5px;
+
+        /* 底部极简毛玻璃悬浮控制坞（绝不遮挡标题与圣诞树！） */
+        #bottom-dock {
+            position: fixed;
+            bottom: 42px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 65;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            max-width: 96vw;
+            transition: opacity 0.4s ease;
+        }
+
+        .theme-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(14, 14, 20, 0.68);
+            border: 1px solid rgba(255, 224, 150, 0.24);
+            backdrop-filter: blur(12px);
+        }
+        .theme-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.28);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            padding: 0;
+        }
+        .theme-dot:hover { transform: scale(1.16); }
+        .theme-dot.active {
+            border-color: #ffffff;
+            transform: scale(1.18);
+            box-shadow: 0 0 12px rgba(255,255,255,0.75);
+        }
+        .color-picker-wrap {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: conic-gradient(#ff5e8e, #ffd966, #66e0ff, #b388ff, #ff5e8e);
+            border: 2px solid rgba(255,255,255,0.45);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .color-picker-wrap:hover { transform: scale(1.15); }
+        #custom-color {
+            position: absolute;
+            inset: -6px;
+            width: 40px;
+            height: 40px;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 7px;
+            padding: 6px 10px;
+            border-radius: 16px;
+            background: rgba(14, 14, 20, 0.68);
+            border: 1px solid rgba(255, 224, 150, 0.24);
+            backdrop-filter: blur(12px);
+        }
+        .dock-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 224, 150, 0.26);
+            color: #f3e2b3;
+            padding: 7px 11px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            transition: all 0.22s ease;
+        }
+        .dock-btn:hover { background: rgba(255, 224, 150, 0.22); color: #fff; }
+        .dock-btn.active {
+            background: rgba(255, 214, 120, 0.28);
+            border-color: rgba(255, 228, 160, 0.8);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(255, 214, 120, 0.35);
         }
 
         input[type="file"] { display: none; }
 
-        /* Webcam feedback */
+        /* 主画面发光魔法手掌光效层（抖音爆款同款指尖星光！） */
+        #hand-magic-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Webcam feedback + 实时发光手掌骨骼叠加层 */
         #webcam-wrapper {
-            position: absolute; 
-            bottom: 30px;       
-            left: 30px;         
-            width: 280px;       
-            height: 210px;
-            border: 1px solid rgba(212, 175, 55, 0.5); 
-            box-shadow: 0 0 20px rgba(0,0,0,0.9);
-            border-radius: 4px;
-            overflow: hidden; 
-            opacity: 1;         
+            position: fixed;
+            top: 66px;
+            left: 16px;
+            width: 180px;
+            height: 135px;
+            border: 1px solid rgba(255, 224, 150, 0.45);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            opacity: 1;
             pointer-events: none;
             z-index: 50;
             background: #000;
-            transition: opacity 0.5s ease; 
+            transition: opacity 0.4s ease;
         }
-        
         #webcam {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); 
+            transform: scaleX(-1);
+        }
+        #webcam-skeleton {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
         }
 
         #gesture-status {
             position: fixed;
-            bottom: 18px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 60;
-            padding: 7px 14px;
+            padding: 4px 12px;
             border-radius: 999px;
-            background: rgba(12, 12, 16, 0.72);
-            border: 1px solid rgba(212, 175, 55, 0.38);
-            color: #f3dc98;
+            background: rgba(12, 12, 16, 0.65);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            color: rgba(243, 220, 152, 0.88);
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
-            font-size: 12px;
-            letter-spacing: 1px;
+            font-size: 11px;
+            letter-spacing: 0.8px;
             white-space: nowrap;
             backdrop-filter: blur(8px);
             pointer-events: none;
             transition: opacity 0.4s ease;
+            max-width: 94vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        /* 定制祝福语 & 生成专属链接弹窗 */
+        #share-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            background: rgba(0, 0, 0, 0.68);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #share-modal.open { display: flex; }
+        .modal-card {
+            width: min(92vw, 360px);
+            background: rgba(18, 18, 28, 0.94);
+            border: 1px solid rgba(255, 224, 150, 0.35);
+            border-radius: 18px;
+            padding: 20px;
+            color: #fff6e5;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.85);
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffe39e;
+        }
+        .modal-close {
+            background: none; border: none; color: #aaa; font-size: 22px; cursor: pointer; line-height: 1;
+        }
+        .modal-label { font-size: 12px; color: #bbb; margin-bottom: 6px; display: block; }
+        .modal-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 224, 150, 0.32);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 14px;
+        }
+        .modal-input:focus { border-color: #ffd966; }
+        .modal-btn {
+            width: 100%;
+            padding: 11px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #ffd966, #e6a83a);
+            color: #1a1204;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+        .modal-btn:active { transform: scale(0.98); }
+        .modal-tip { font-size: 11px; color: #9ea8b8; margin-top: 10px; line-height: 1.5; text-align: center; }
 
         /* 手机竖屏完美适配 */
         @media (max-width: 768px) {
-            #ui-layer { padding-top: 18px; }
-            h1 { font-size: clamp(24px, 7vw, 38px); letter-spacing: 3px; }
-            .controls-wrapper {
-                top: auto;
-                bottom: 58px;
-                right: 12px;
-                gap: 6px;
-            }
-            .btn-group { flex-direction: column; gap: 6px; }
-            .upload-btn {
-                padding: 8px 12px;
-                font-size: 11px;
-                min-width: 92px;
-                letter-spacing: 1px;
-                border-radius: 6px;
-            }
-            .hint-text { display: none; }
+            #ui-layer { padding-top: 16px; }
             #webcam-wrapper {
-                bottom: 58px;
-                left: 12px;
-                width: 108px;
-                height: 144px;
-                border-radius: 8px;
+                top: 62px;
+                left: 10px;
+                width: 96px;
+                height: 128px;
             }
-            #gesture-status {
-                bottom: 14px;
-                font-size: 11px;
-                max-width: 92vw;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
+            #bottom-dock { bottom: 38px; gap: 6px; }
+            .dock-btn { padding: 6px 9px; font-size: 11px; }
         }
     </style>
 
@@ -207,31 +364,59 @@
     </div>
 
     <div id="canvas-container"></div>
+    <canvas id="hand-magic-canvas"></canvas>
 
     <div id="ui-layer">
-        <h1>Merry Christmas</h1>
-        
-        <div class="controls-wrapper">
-            <div class="btn-group">
-                <button class="upload-btn" id="cam-btn" type="button">开启手势摄像头</button>
-                <label class="upload-btn">
-                    上传照片
-                    <input type="file" id="file-input" multiple accept="image/*">
-                </label>
-                <label class="upload-btn" id="folder-label">
-                    选文件夹
-                    <input type="file" id="folder-input" webkitdirectory directory multiple>
-                </label>
-            </div>
-            <div class="hint-text">握拳成树 · 张开手掌散落 · 捏合看照片 · 也可触屏拖动</div>
-        </div>
+        <h1 id="main-title" title="点击修改专属祝福语">Merry Christmas</h1>
+        <div id="gesture-badge">✨ 手势已锁定</div>
     </div>
+
+    <button id="pure-btn" type="button" title="隐藏/显示界面 (纯净截图)">👁️</button>
 
     <div id="webcam-wrapper" style="display:none;">
         <video id="webcam" autoplay playsinline webkit-playsinline muted></video>
+        <canvas id="webcam-skeleton"></canvas>
         <canvas id="webcam-preview" style="display:none;"></canvas>
     </div>
-    <div id="gesture-status">正在初始化手势摄像头…</div>
+
+    <div id="bottom-dock">
+        <div class="theme-bar" title="切换圣诞树颜色">
+            <button class="theme-dot active" data-theme="classic" style="background:linear-gradient(135deg,#ffd966,#0c5e2b)" title="经典鎏金绿"></button>
+            <button class="theme-dot" data-theme="pink" style="background:linear-gradient(135deg,#ffd1e8,#ff4d9e)" title="迪奥粉钻"></button>
+            <button class="theme-dot" data-theme="ice" style="background:linear-gradient(135deg,#d6f4ff,#1e78d6)" title="冰雪艾莎蓝"></button>
+            <button class="theme-dot" data-theme="violet" style="background:linear-gradient(135deg,#eccfff,#6d28d9)" title="极光冰紫"></button>
+            <button class="theme-dot" data-theme="crimson" style="background:linear-gradient(135deg,#ffd98a,#c8102e)" title="炽焰圣诞红"></button>
+            <label class="color-picker-wrap" title="自由调色盘">
+                <input type="color" id="custom-color" value="#ffd966" />
+            </label>
+        </div>
+        <div class="action-bar">
+            <button class="dock-btn" id="cam-btn" type="button">📷 摄像头</button>
+            <label class="dock-btn">
+                🖼️ 传照片
+                <input type="file" id="file-input" multiple accept="image/*">
+            </label>
+            <button class="dock-btn" id="clear-photos-btn" type="button">🗑️ 清空照片</button>
+            <button class="dock-btn active" id="snow-btn" type="button">❄️ 飘雪</button>
+            <button class="dock-btn" id="music-btn" type="button">🎵 八音盒</button>
+            <button class="dock-btn" id="share-btn" type="button">🎁 定制分享</button>
+        </div>
+    </div>
+
+    <div id="gesture-status">正在初始化手势引擎…</div>
+
+    <div id="share-modal">
+        <div class="modal-card">
+            <div class="modal-title">
+                <span>🎁 定制专属圣诞树</span>
+                <button class="modal-close" id="modal-close" type="button">×</button>
+            </div>
+            <label class="modal-label">顶部专属祝福语（可写上 TA 的名字）</label>
+            <input class="modal-input" id="greeting-input" type="text" maxlength="26" value="Merry Christmas" placeholder="例如：To 小美 · 圣诞快乐" />
+            <button class="modal-btn" id="copy-link-btn" type="button">复制专属分享链接</button>
+            <div class="modal-tip" id="copy-tip">链接会自动记住你的祝福语和圣诞树配色，发给好友点开即见！</div>
+        </div>
+    </div>
 
     <script type="module">
         import * as THREE from 'three';
@@ -292,9 +477,122 @@
         let modelReady = false;
         let predictLoopStarted = false;
 
+        // 动态换色共享材质与灯光句柄 + 3D 飘雪
+        let matGold, matGreen, matRed, matStar, matDust, lightInner, lightGold, lightBlue;
+        let snowPoints = null, snowPosArr = null, snowEnabled = true;
+        let activeThemeKey = 'classic';
+        let activeCustomHex = '';
+        let activeGlowHex = '#ffd966';
+
+        const THEMES = {
+            classic: {
+                name: '经典鎏金绿',
+                gold: 0xffd966, goldEm: 0x443300,
+                green: 0x063016, greenEm: 0x00240b,
+                red: 0xb80f1a, redEm: 0x3b0408,
+                star: 0xffdd88, starEm: 0xffaa00,
+                dust: 0xffeebb, lightIn: 0xffaa00, lightA: 0xffcc66, lightB: 0x6688ff,
+                accentCss: '#eebb66', glowHex: '#ffd966'
+            },
+            pink: {
+                name: '迪奥粉钻',
+                gold: 0xffc8e2, goldEm: 0x5c1438,
+                green: 0xd9387a, greenEm: 0x450924,
+                red: 0xfff0f7, redEm: 0x663350,
+                star: 0xffe0f0, starEm: 0xff66aa,
+                dust: 0xffd6eb, lightIn: 0xff77bb, lightA: 0xffb3d9, lightB: 0xc299ff,
+                accentCss: '#ff99cc', glowHex: '#ff8ec7'
+            },
+            ice: {
+                name: '冰雪艾莎蓝',
+                gold: 0xb8ecff, goldEm: 0x164a6e,
+                green: 0x104a8c, greenEm: 0x08234a,
+                red: 0xeaf8ff, redEm: 0x336688,
+                star: 0xdff6ff, starEm: 0x44b8ff,
+                dust: 0xd6f4ff, lightIn: 0x55c2ff, lightA: 0x9ee2ff, lightB: 0x8099ff,
+                accentCss: '#9ee2ff', glowHex: '#7ad7ff'
+            },
+            violet: {
+                name: '极光冰紫',
+                gold: 0xe6c2ff, goldEm: 0x3e1566,
+                green: 0x41187d, greenEm: 0x1c083d,
+                red: 0x80f0ff, redEm: 0x124b5c,
+                star: 0xf2dcff, starEm: 0xb266ff,
+                dust: 0xe5ccff, lightIn: 0xb86bff, lightA: 0xd9a8ff, lightB: 0x55e0ff,
+                accentCss: '#d9a8ff', glowHex: '#c98aff'
+            },
+            crimson: {
+                name: '炽焰圣诞红',
+                gold: 0xffd275, goldEm: 0x522a00,
+                green: 0x8f0b18, greenEm: 0x380308,
+                red: 0xff4252, redEm: 0x5c0810,
+                star: 0xffe49e, starEm: 0xff7722,
+                dust: 0xffdbb0, lightIn: 0xff5522, lightA: 0xffb366, lightB: 0xff4466,
+                accentCss: '#ffaa77', glowHex: '#ff8855'
+            }
+        };
+
+        function applyTheme(key) {
+            const t = THEMES[key] || THEMES.classic;
+            activeThemeKey = key;
+            activeCustomHex = '';
+            activeGlowHex = t.glowHex;
+            if (matGold)  { matGold.color.setHex(t.gold);   matGold.emissive.setHex(t.goldEm); }
+            if (matGreen) { matGreen.color.setHex(t.green); matGreen.emissive.setHex(t.greenEm); }
+            if (matRed)   { matRed.color.setHex(t.red);     matRed.emissive.setHex(t.redEm); }
+            if (matStar)  { matStar.color.setHex(t.star);   matStar.emissive.setHex(t.starEm); }
+            if (matDust)  { matDust.color.setHex(t.dust); }
+            if (lightInner) lightInner.color.setHex(t.lightIn);
+            if (lightGold)  lightGold.color.setHex(t.lightA);
+            if (lightBlue)  lightBlue.color.setHex(t.lightB);
+            document.documentElement.style.setProperty('--accent-light', t.accentCss);
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === key));
+        }
+
+        function applyCustomColor(hex) {
+            activeThemeKey = 'custom';
+            activeCustomHex = hex;
+            activeGlowHex = hex;
+            const c = new THREE.Color(hex);
+            const hsl = {}; c.getHSL(hsl);
+            const dark = new THREE.Color().setHSL(hsl.h, Math.min(1, hsl.s * 1.05), Math.max(0.14, hsl.l * 0.42));
+            const bright = new THREE.Color().setHSL(hsl.h, Math.min(1, hsl.s * 0.85), Math.min(0.88, hsl.l + 0.22));
+            const accent = new THREE.Color().setHSL((hsl.h + 0.08) % 1, Math.min(1, hsl.s), Math.min(0.82, hsl.l + 0.14));
+            if (matGold)  { matGold.color.copy(bright); matGold.emissive.copy(dark); }
+            if (matGreen) { matGreen.color.copy(dark);  matGreen.emissive.copy(dark).multiplyScalar(0.5); }
+            if (matRed)   { matRed.color.copy(accent);  matRed.emissive.copy(dark); }
+            if (matStar)  { matStar.color.copy(bright); matStar.emissive.copy(c); }
+            if (matDust)  { matDust.color.copy(bright); }
+            if (lightInner) lightInner.color.copy(c);
+            if (lightGold)  lightGold.color.copy(bright);
+            if (lightBlue)  lightBlue.color.copy(accent);
+            document.documentElement.style.setProperty('--accent-light', '#' + bright.getHexString());
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+        }
+
         function setStatus(text) {
             const el = document.getElementById('gesture-status');
             if (el) el.textContent = text;
+        }
+
+        function applyUrlParams() {
+            const params = new URLSearchParams(location.search);
+            const to = params.get('to');
+            const theme = params.get('theme');
+            const color = params.get('color');
+            if (to) {
+                const titleEl = document.getElementById('main-title');
+                const inputEl = document.getElementById('greeting-input');
+                if (titleEl) titleEl.textContent = to;
+                if (inputEl) inputEl.value = to;
+            }
+            if (color && /^#[0-9a-fA-F]{6}$/.test(color)) {
+                const picker = document.getElementById('custom-color');
+                if (picker) picker.value = color;
+                applyCustomColor(color);
+            } else if (theme && THEMES[theme]) {
+                applyTheme(theme);
+            }
         }
 
         async function init() {
@@ -303,7 +601,9 @@
             setupLights();
             createTextures();
             createParticles(); 
-            createDust();     
+            createDust();
+            createSnow();
+            applyUrlParams();
             
             // 执行自动图片加载逻辑
             loadPredefinedImages();
@@ -393,19 +693,19 @@
             const ambient = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambient);
 
-            const innerLight = new THREE.PointLight(0xffaa00, 2, 20);
-            innerLight.position.set(0, 5, 0);
-            mainGroup.add(innerLight);
+            lightInner = new THREE.PointLight(0xffaa00, 2, 20);
+            lightInner.position.set(0, 5, 0);
+            mainGroup.add(lightInner);
 
-            const spotGold = new THREE.SpotLight(0xffcc66, 1200);
-            spotGold.position.set(30, 40, 40);
-            spotGold.angle = 0.5;
-            spotGold.penumbra = 0.5;
-            scene.add(spotGold);
+            lightGold = new THREE.SpotLight(0xffcc66, 1200);
+            lightGold.position.set(30, 40, 40);
+            lightGold.angle = 0.5;
+            lightGold.penumbra = 0.5;
+            scene.add(lightGold);
 
-            const spotBlue = new THREE.SpotLight(0x6688ff, 600);
-            spotBlue.position.set(-30, 20, -30);
-            scene.add(spotBlue);
+            lightBlue = new THREE.SpotLight(0x6688ff, 600);
+            lightBlue.position.set(-30, 20, -30);
+            scene.add(lightBlue);
             
             const fill = new THREE.DirectionalLight(0xffeebb, 0.8);
             fill.position.set(0, 0, 50);
@@ -487,7 +787,8 @@
                 if (rMax < 0.5) rMax = 0.5;
 
                 const angle = t * 50 * Math.PI + Math.random() * Math.PI; 
-                const r = rMax * (0.8 + Math.random() * 0.4); 
+                // 收紧树冠锥体轮廓，彻底消除树底零散掉落感！
+                const r = rMax * (0.52 + Math.random() * 0.48); 
                 this.posTree.set(Math.cos(angle) * r, y, Math.sin(angle) * r);
 
                 let rScatter = this.isDust ? (12 + Math.random()*20) : (8 + Math.random()*12);
@@ -569,7 +870,8 @@
                 let rMax = CONFIG.particles.treeRadius * (1.0 - normalizedH);
                 if (rMax < 1.0) rMax = 1.0;
                 
-                const r = rMax + 3.0; 
+                // 紧贴圣诞树表面镶嵌照片，彻底消除“树外飘着一块碎片”的小 Bug！
+                const r = rMax + 0.72; 
                 const angle = normalizedH * Math.PI * 2 * loops + (Math.PI/4); 
 
                 p.posTree.set(Math.cos(angle) * r, y, Math.sin(angle) * r);
@@ -585,7 +887,7 @@
             ]);
             const candyGeo = new THREE.TubeGeometry(curve, 16, 0.08, 8, false);
 
-            const goldMat = new THREE.MeshStandardMaterial({
+            matGold = new THREE.MeshStandardMaterial({
                 color: CONFIG.colors.champagneGold,
                 metalness: 1.0, roughness: 0.1,
                 envMapIntensity: 2.0, 
@@ -593,14 +895,14 @@
                 emissiveIntensity: 0.3
             });
 
-            const greenMat = new THREE.MeshStandardMaterial({
+            matGreen = new THREE.MeshStandardMaterial({
                 color: CONFIG.colors.deepGreen,
                 metalness: 0.2, roughness: 0.8,
                 emissive: 0x002200,
                 emissiveIntensity: 0.2 
             });
 
-            const redMat = new THREE.MeshPhysicalMaterial({
+            matRed = new THREE.MeshPhysicalMaterial({
                 color: CONFIG.colors.accentRed,
                 metalness: 0.3, roughness: 0.2, clearcoat: 1.0,
                 emissive: 0x330000
@@ -613,16 +915,16 @@
                 let mesh, type;
                 
                 if (rand < 0.40) {
-                    mesh = new THREE.Mesh(boxGeo, greenMat);
+                    mesh = new THREE.Mesh(boxGeo, matGreen);
                     type = 'BOX';
                 } else if (rand < 0.70) {
-                    mesh = new THREE.Mesh(boxGeo, goldMat);
+                    mesh = new THREE.Mesh(boxGeo, matGold);
                     type = 'GOLD_BOX';
                 } else if (rand < 0.92) {
-                    mesh = new THREE.Mesh(sphereGeo, goldMat);
+                    mesh = new THREE.Mesh(sphereGeo, matGold);
                     type = 'GOLD_SPHERE';
                 } else if (rand < 0.97) {
-                    mesh = new THREE.Mesh(sphereGeo, redMat);
+                    mesh = new THREE.Mesh(sphereGeo, matRed);
                     type = 'RED';
                 } else {
                     mesh = new THREE.Mesh(candyGeo, candyMat);
@@ -662,11 +964,11 @@
             });
             starGeo.center(); 
 
-            const starMat = new THREE.MeshStandardMaterial({
+            matStar = new THREE.MeshStandardMaterial({
                 color: 0xffdd88, emissive: 0xffaa00, emissiveIntensity: 1.0,
                 metalness: 1.0, roughness: 0
             });
-            const star = new THREE.Mesh(starGeo, starMat);
+            const star = new THREE.Mesh(starGeo, matStar);
             star.position.set(0, CONFIG.particles.treeHeight/2 + 1.2, 0);
             mainGroup.add(star);
             
@@ -675,14 +977,62 @@
 
         function createDust() {
             const geo = new THREE.TetrahedronGeometry(0.08, 0);
-            const mat = new THREE.MeshBasicMaterial({ color: 0xffeebb, transparent: true, opacity: 0.8 });
+            matDust = new THREE.MeshBasicMaterial({ color: 0xffeebb, transparent: true, opacity: 0.8 });
             
             for(let i=0; i<CONFIG.particles.dustCount; i++) {
-                 const mesh = new THREE.Mesh(geo, mat);
+                 const mesh = new THREE.Mesh(geo, matDust);
                  mesh.scale.setScalar(0.5 + Math.random());
                  mainGroup.add(mesh);
                  particleSystem.push(new Particle(mesh, 'DUST', true));
             }
+        }
+
+        // 3D 漫天细雪粒子
+        function createSnow() {
+            const count = 850;
+            const geo = new THREE.BufferGeometry();
+            snowPosArr = new Float32Array(count * 3);
+            for (let i = 0; i < count; i++) {
+                snowPosArr[i * 3]     = (Math.random() - 0.5) * 65;
+                snowPosArr[i * 3 + 1] = (Math.random() - 0.5) * 50;
+                snowPosArr[i * 3 + 2] = (Math.random() - 0.5) * 55;
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(snowPosArr, 3));
+            const mat = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.24,
+                transparent: true,
+                opacity: 0.72,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            snowPoints = new THREE.Points(geo, mat);
+            scene.add(snowPoints);
+        }
+
+        function updateSnow(dt) {
+            if (!snowPoints || !snowEnabled) return;
+            const t = clock.elapsedTime;
+            for (let i = 0; i < snowPosArr.length; i += 3) {
+                snowPosArr[i]     += Math.sin(t * 0.8 + i) * 0.6 * dt;
+                snowPosArr[i + 1] -= (2.2 + (i % 5) * 0.35) * dt;
+                if (snowPosArr[i + 1] < -22) snowPosArr[i + 1] = 26;
+            }
+            snowPoints.geometry.attributes.position.needsUpdate = true;
+        }
+
+        // 一键清除树上所有照片
+        function clearAllPhotos() {
+            while (photoMeshGroup.children.length > 0) {
+                const grp = photoMeshGroup.children[0];
+                photoMeshGroup.remove(grp);
+            }
+            particleSystem = particleSystem.filter(p => p.type !== 'PHOTO');
+            if (STATE.mode === 'FOCUS') {
+                STATE.mode = 'TREE';
+                STATE.focusTarget = null;
+            }
+            setStatus('已清空所有照片，可点击「传照片」重新挂上你的专属回忆');
         }
 
         function addPhotoToScene(texture) {
@@ -917,7 +1267,8 @@
 
                 cameraRunning = true;
                 wrapper.style.display = 'block';
-                camBtn.textContent = '隐藏摄像头';
+                camBtn.textContent = '📷 隐藏画面';
+                camBtn.classList.add('active');
 
                 if (!predictLoopStarted) {
                     predictLoopStarted = true;
@@ -933,7 +1284,7 @@
                 console.warn('Camera error:', e);
                 wrapper.style.display = 'none';
                 if (!fromUserGesture) {
-                    setStatus('点击「开启手势摄像头」即可隔空操控（或直接触屏）');
+                    setStatus('点击下方「📷 摄像头」即可隔空发光手势操控（或直接触屏）');
                 } else {
                     setStatus('摄像头权限未开启，请在浏览器设置允许后重试（可触屏操作）');
                 }
@@ -957,6 +1308,221 @@
             }
         }
 
+        // --- 抖音爆款同款：发光魔法手掌骨骼 + 主屏指尖星光光效 ---
+        const HAND_BONES = [
+            [0,1],[1,2],[2,3],[3,4],
+            [0,5],[5,6],[6,7],[7,8],
+            [5,9],[9,10],[10,11],[11,12],
+            [9,13],[13,14],[14,15],[15,16],
+            [13,17],[17,18],[18,19],[19,20],[0,17]
+        ];
+        const FINGERTIPS = [4, 8, 12, 16, 20];
+        const skelCanvas = document.getElementById('webcam-skeleton');
+        const skelCtx = skelCanvas.getContext('2d');
+        const magicCanvas = document.getElementById('hand-magic-canvas');
+        const magicCtx = magicCanvas.getContext('2d');
+        const magicSparks = [];
+        let smoothHandX = 0, smoothHandY = 0;
+        let lastGestureLabel = '', gestureStableCount = 0, pendingMode = '';
+        let latestLandmarks = null;
+
+        function resizeMagicCanvas() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            magicCanvas.width = Math.floor(window.innerWidth * dpr);
+            magicCanvas.height = Math.floor(window.innerHeight * dpr);
+            magicCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        resizeMagicCanvas();
+
+        function spawnMagicSpark(x, y, burst = false) {
+            const n = burst ? 14 : 2;
+            for (let i = 0; i < n; i++) {
+                if (magicSparks.length > 160) magicSparks.shift();
+                const ang = Math.random() * Math.PI * 2;
+                const sp = burst ? (60 + Math.random() * 140) : (12 + Math.random() * 32);
+                magicSparks.push({
+                    x, y,
+                    vx: Math.cos(ang) * sp,
+                    vy: Math.sin(ang) * sp - (burst ? 10 : 22),
+                    r: burst ? (1.8 + Math.random() * 2.6) : (1.2 + Math.random() * 2.0),
+                    life: 0,
+                    maxLife: burst ? (0.55 + Math.random() * 0.45) : (0.45 + Math.random() * 0.45),
+                    color: activeGlowHex
+                });
+            }
+        }
+
+        function drawWebcamSkeleton(lm, isPinch) {
+            const w = skelCanvas.clientWidth || 180;
+            const h = skelCanvas.clientHeight || 135;
+            if (skelCanvas.width !== w || skelCanvas.height !== h) {
+                skelCanvas.width = w; skelCanvas.height = h;
+            }
+            skelCtx.clearRect(0, 0, w, h);
+            if (!lm) return;
+
+            skelCtx.save();
+            skelCtx.shadowColor = activeGlowHex;
+            skelCtx.shadowBlur = 12;
+            skelCtx.strokeStyle = activeGlowHex;
+            skelCtx.lineWidth = 2.0;
+            skelCtx.lineCap = 'round';
+
+            // 镜像绘制 21 点发光手掌骨骼（与镜像视频完全对齐！）
+            skelCtx.beginPath();
+            for (const [a, b] of HAND_BONES) {
+                const pa = lm[a], pb = lm[b];
+                skelCtx.moveTo((1 - pa.x) * w, pa.y * h);
+                skelCtx.lineTo((1 - pb.x) * w, pb.y * h);
+            }
+            skelCtx.stroke();
+
+            // 绘制关节与高光指尖星点
+            for (let i = 0; i < lm.length; i++) {
+                const px = (1 - lm[i].x) * w, py = lm[i].y * h;
+                const isTip = FINGERTIPS.includes(i);
+                skelCtx.fillStyle = isTip ? '#ffffff' : activeGlowHex;
+                skelCtx.beginPath();
+                skelCtx.arc(px, py, isTip ? 3.8 : 2.1, 0, Math.PI * 2);
+                skelCtx.fill();
+            }
+
+            // 捏合瞬间：拇指与食指之间绽放高光魔法圆环
+            if (isPinch) {
+                const mx = (1 - (lm[4].x + lm[8].x) * 0.5) * w;
+                const my = ((lm[4].y + lm[8].y) * 0.5) * h;
+                skelCtx.strokeStyle = '#ffffff';
+                skelCtx.lineWidth = 2.4;
+                skelCtx.beginPath();
+                skelCtx.arc(mx, my, 10, 0, Math.PI * 2);
+                skelCtx.stroke();
+            }
+            skelCtx.restore();
+        }
+
+        function updateHandMagicFx(dt) {
+            const W = window.innerWidth, H = window.innerHeight;
+            magicCtx.clearRect(0, 0, W, H);
+            magicCtx.save();
+            magicCtx.globalCompositeOperation = 'lighter';
+
+            // 如果检测到手掌，在主屏同步渲染柔和发光的「魔法掌心光环 + 指尖星点」
+            if (STATE.hand.detected && latestLandmarks) {
+                const lm = latestLandmarks;
+                const palmX = (1 - lm[9].x) * W;
+                const palmY = lm[9].y * H;
+
+                const grad = magicCtx.createRadialGradient(palmX, palmY, 2, palmX, palmY, 54);
+                grad.addColorStop(0, 'rgba(255,255,255,0.55)');
+                grad.addColorStop(0.35, activeGlowHex + '66');
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                magicCtx.fillStyle = grad;
+                magicCtx.beginPath();
+                magicCtx.arc(palmX, palmY, 54, 0, Math.PI * 2);
+                magicCtx.fill();
+
+                // 五指指尖跟随星芒
+                for (const idx of FINGERTIPS) {
+                    const fx = (1 - lm[idx].x) * W;
+                    const fy = lm[idx].y * H;
+                    const fg = magicCtx.createRadialGradient(fx, fy, 0, fx, fy, 16);
+                    fg.addColorStop(0, 'rgba(255,255,255,0.92)');
+                    fg.addColorStop(0.45, activeGlowHex + '88');
+                    fg.addColorStop(1, 'rgba(0,0,0,0)');
+                    magicCtx.fillStyle = fg;
+                    magicCtx.beginPath();
+                    magicCtx.arc(fx, fy, 16, 0, Math.PI * 2);
+                    magicCtx.fill();
+                }
+
+                if (Math.random() < 0.65) {
+                    const tipIdx = FINGERTIPS[Math.floor(Math.random() * FINGERTIPS.length)];
+                    spawnMagicSpark((1 - lm[tipIdx].x) * W, lm[tipIdx].y * H, false);
+                }
+            }
+
+            // 更新并绘制漂浮魔法星尘
+            for (let i = magicSparks.length - 1; i >= 0; i--) {
+                const s = magicSparks[i];
+                s.life += dt;
+                if (s.life >= s.maxLife) { magicSparks.splice(i, 1); continue; }
+                s.x += s.vx * dt;
+                s.y += s.vy * dt;
+                const a = 1 - s.life / s.maxLife;
+                magicCtx.globalAlpha = a * 0.9;
+                magicCtx.fillStyle = '#ffffff';
+                magicCtx.shadowColor = s.color;
+                magicCtx.shadowBlur = 10;
+                magicCtx.beginPath();
+                magicCtx.arc(s.x, s.y, s.r * a, 0, Math.PI * 2);
+                magicCtx.fill();
+            }
+            magicCtx.restore();
+        }
+
+        function setGestureBadge(text, show) {
+            const badge = document.getElementById('gesture-badge');
+            if (!badge) return;
+            if (show) {
+                badge.textContent = text;
+                badge.classList.add('active');
+            } else {
+                badge.classList.remove('active');
+            }
+        }
+
+        // --- 程序化圣诞八音盒 BGM（0 外部文件，清脆治愈！）---
+        let musicCtx = null, musicPlaying = false, musicTimer = null, musicStep = 0;
+        const MUSIC_NOTES = [
+            // We Wish You a Merry Christmas + Jingle Bells 清脆八音盒旋律
+            [392, 0.35], [523.25, 0.35], [523.25, 0.18], [587.33, 0.18], [523.25, 0.18], [493.88, 0.18],
+            [440, 0.35], [440, 0.35], [440, 0.35], [587.33, 0.35], [587.33, 0.18], [659.25, 0.18],
+            [587.33, 0.18], [523.25, 0.18], [493.88, 0.35], [392, 0.35], [392, 0.35],
+            [659.25, 0.35], [659.25, 0.18], [698.46, 0.18], [659.25, 0.18], [587.33, 0.18], [523.25, 0.35],
+            [440, 0.35], [392, 0.18], [392, 0.18], [440, 0.35], [587.33, 0.35], [493.88, 0.35], [523.25, 0.70]
+        ];
+        function playMusicNote(freq, dur) {
+            if (!musicCtx) return;
+            const now = musicCtx.currentTime;
+            const osc = musicCtx.createOscillator();
+            const overtone = musicCtx.createOscillator();
+            const g = musicCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(freq * 2, now);
+            overtone.type = 'triangle'; overtone.frequency.setValueAtTime(freq * 4, now);
+            g.gain.setValueAtTime(0.0005, now);
+            g.gain.linearRampToValueAtTime(0.055, now + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.0004, now + dur * 2.2);
+            const og = musicCtx.createGain(); og.gain.value = 0.16;
+            osc.connect(g); overtone.connect(og).connect(g); g.connect(musicCtx.destination);
+            osc.start(now); overtone.start(now);
+            osc.stop(now + dur * 2.3); overtone.stop(now + dur * 2.3);
+        }
+        function scheduleMusicNext() {
+            if (!musicPlaying) return;
+            const [freq, dur] = MUSIC_NOTES[musicStep % MUSIC_NOTES.length];
+            musicStep++;
+            playMusicNote(freq, dur);
+            musicTimer = setTimeout(scheduleMusicNext, dur * 1000);
+        }
+        function toggleMusicBox() {
+            const btn = document.getElementById('music-btn');
+            if (musicPlaying) {
+                musicPlaying = false;
+                clearTimeout(musicTimer);
+                btn.classList.remove('active');
+                btn.textContent = '🎵 八音盒';
+            } else {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return;
+                if (!musicCtx) musicCtx = new AC();
+                if (musicCtx.state === 'suspended') musicCtx.resume().catch(() => {});
+                musicPlaying = true;
+                btn.classList.add('active');
+                btn.textContent = '🔊 播放中';
+                scheduleMusicNext();
+            }
+        }
+
         let lastVideoTime = -1;
         async function predictWebcam() {
             if (cameraRunning && video && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
@@ -977,8 +1543,15 @@
             if (result.landmarks && result.landmarks.length > 0) {
                 STATE.hand.detected = true;
                 const lm = result.landmarks[0];
-                STATE.hand.x = (lm[9].x - 0.5) * 2; 
-                STATE.hand.y = (lm[9].y - 0.5) * 2;
+                latestLandmarks = lm;
+
+                // 平滑滤波手掌坐标，跟手更丝滑不抖动！
+                const rawX = (lm[9].x - 0.5) * 2;
+                const rawY = (lm[9].y - 0.5) * 2;
+                smoothHandX += (rawX - smoothHandX) * 0.38;
+                smoothHandY += (rawY - smoothHandY) * 0.38;
+                STATE.hand.x = smoothHandX;
+                STATE.hand.y = smoothHandY;
 
                 const thumb = lm[4]; const index = lm[8]; const wrist = lm[0];
                 const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
@@ -987,21 +1560,54 @@
                 tips.forEach(t => avgDist += Math.hypot(t.x - wrist.x, t.y - wrist.y));
                 avgDist /= 4;
 
-                if (pinchDist < 0.05) {
-                    if (STATE.mode !== 'FOCUS') {
-                        STATE.mode = 'FOCUS';
-                        const photos = particleSystem.filter(p => p.type === 'PHOTO');
-                        if (photos.length) STATE.focusTarget = photos[Math.floor(Math.random()*photos.length)].mesh;
-                    }
-                } else if (avgDist < 0.25) {
-                    STATE.mode = 'TREE';
-                    STATE.focusTarget = null;
-                } else if (avgDist > 0.4) {
-                    STATE.mode = 'SCATTER';
-                    STATE.focusTarget = null;
+                const isPinch = pinchDist < 0.068;
+                drawWebcamSkeleton(lm, isPinch);
+
+                let detectedMode = STATE.mode;
+                let badgeText = '✨ 手掌已锁定 · 移动可旋转';
+                if (isPinch) {
+                    detectedMode = 'FOCUS';
+                    badgeText = '👌 捏合 · 聚焦专属照片';
+                } else if (avgDist < 0.27) {
+                    detectedMode = 'TREE';
+                    badgeText = '✊ 握拳 · 聚拢圣诞树';
+                } else if (avgDist > 0.36) {
+                    detectedMode = 'SCATTER';
+                    badgeText = '🖐️ 张手 · 星空散落随手旋转';
                 }
+
+                // 2 帧轻防抖，既灵敏又不误触！
+                if (detectedMode === pendingMode) {
+                    gestureStableCount++;
+                } else {
+                    pendingMode = detectedMode;
+                    gestureStableCount = 1;
+                }
+
+                if (gestureStableCount >= 2 && detectedMode !== STATE.mode) {
+                    const prevMode = STATE.mode;
+                    STATE.mode = detectedMode;
+                    const burstX = (1 - lm[9].x) * window.innerWidth;
+                    const burstY = lm[9].y * window.innerHeight;
+                    spawnMagicSpark(burstX, burstY, true);
+
+                    if (detectedMode === 'FOCUS') {
+                        const photos = particleSystem.filter(p => p.type === 'PHOTO');
+                        if (photos.length) {
+                            STATE.focusTarget = photos[Math.floor(Math.random() * photos.length)].mesh;
+                        } else {
+                            badgeText = '👌 还没有照片哦，点下方「传照片」挂上吧';
+                        }
+                    } else if (prevMode !== detectedMode) {
+                        STATE.focusTarget = null;
+                    }
+                }
+                setGestureBadge(badgeText, true);
             } else {
                 STATE.hand.detected = false;
+                latestLandmarks = null;
+                drawWebcamSkeleton(null, false);
+                setGestureBadge('', false);
             }
         }
 
@@ -1013,20 +1619,82 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 composer.setSize(window.innerWidth, window.innerHeight);
+                resizeMagicCanvas();
             });
 
-            // 手机隐藏不支持的选文件夹按钮
-            if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-                const fl = document.getElementById('folder-label');
-                if (fl) fl.style.display = 'none';
-            }
+            // 5 套高定圣诞树颜色 + 自由调色盘
+            document.querySelectorAll('.theme-dot').forEach(dot => {
+                dot.addEventListener('click', () => {
+                    applyTheme(dot.dataset.theme);
+                    setStatus(`已切换主题：${THEMES[dot.dataset.theme].name}`);
+                });
+            });
+            document.getElementById('custom-color').addEventListener('input', (e) => {
+                applyCustomColor(e.target.value);
+                setStatus('已应用自定义圣诞树色彩 ✨');
+            });
 
-            // 点击开启 / 显隐前置手势摄像头（完美满足 iOS 用户手势要求）
+            // 点击开启 / 显隐前置手势摄像头
             document.getElementById('cam-btn').addEventListener('click', () => startCamera(true));
             
-            // 绑定两个上传按钮事件
-            document.getElementById('file-input').addEventListener('change', handleImageUpload);
-            document.getElementById('folder-input').addEventListener('change', handleImageUpload);
+            // 上传照片 & 一键清空照片
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                handleImageUpload(e);
+                e.target.value = '';
+                setStatus('已将你的照片挂上圣诞树，捏合手指可聚焦查看！');
+            });
+            document.getElementById('clear-photos-btn').addEventListener('click', clearAllPhotos);
+
+            // 3D 飘雪开关
+            const snowBtn = document.getElementById('snow-btn');
+            snowBtn.addEventListener('click', () => {
+                snowEnabled = !snowEnabled;
+                if (snowPoints) snowPoints.visible = snowEnabled;
+                snowBtn.classList.toggle('active', snowEnabled);
+            });
+
+            // 圣诞八音盒 BGM 开关
+            document.getElementById('music-btn').addEventListener('click', toggleMusicBox);
+
+            // 纯净欣赏 / 截图隐藏 UI 按钮
+            const pureBtn = document.getElementById('pure-btn');
+            pureBtn.addEventListener('click', () => {
+                const pure = document.body.classList.toggle('pure-mode');
+                pureBtn.textContent = pure ? '✨' : '👁️';
+            });
+
+            // 定制祝福语 & 生成专属分享链接弹窗
+            const modal = document.getElementById('share-modal');
+            const openModal = () => { modal.classList.add('open'); document.getElementById('copy-tip').textContent = '链接会自动记住你的祝福语和圣诞树配色，发给好友点开即见！'; };
+            document.getElementById('share-btn').addEventListener('click', openModal);
+            document.getElementById('main-title').addEventListener('click', openModal);
+            document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('open'));
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+            const greetingInput = document.getElementById('greeting-input');
+            greetingInput.addEventListener('input', () => {
+                const v = greetingInput.value.trim() || 'Merry Christmas';
+                document.getElementById('main-title').textContent = v;
+            });
+
+            document.getElementById('copy-link-btn').addEventListener('click', async () => {
+                const title = greetingInput.value.trim() || 'Merry Christmas';
+                document.getElementById('main-title').textContent = title;
+                const url = new URL(location.origin + location.pathname);
+                url.searchParams.set('to', title);
+                if (activeThemeKey === 'custom' && activeCustomHex) {
+                    url.searchParams.set('color', activeCustomHex);
+                } else {
+                    url.searchParams.set('theme', activeThemeKey);
+                }
+                const shareStr = url.toString();
+                try {
+                    await navigator.clipboard.writeText(shareStr);
+                    document.getElementById('copy-tip').textContent = '✅ 专属链接已复制！快去微信/抖音发给 TA 吧';
+                } catch (e) {
+                    prompt('请长按复制你的专属圣诞树链接：', shareStr);
+                }
+            });
 
             // 手机触屏备用操控：单指拖动旋转，双击切换 圣诞树 / 星空散落 / 聚焦照片
             let dragging = false, lastX = 0, lastY = 0, lastTap = 0;
@@ -1062,15 +1730,10 @@
             window.addEventListener('pointercancel', () => { dragging = false; });
             
             window.addEventListener('keydown', (e) => {
+                if (document.activeElement === greetingInput) return;
                 if (e.key.toLowerCase() === 'h') {
-                    const controls = document.querySelector('.controls-wrapper');
-                    if (controls) controls.classList.toggle('ui-hidden');
-                    
-                    const webcam = document.getElementById('webcam-wrapper');
-                    if (webcam) webcam.classList.toggle('ui-hidden');
-
-                    const status = document.getElementById('gesture-status');
-                    if (status) status.classList.toggle('ui-hidden');
+                    const pure = document.body.classList.toggle('pure-mode');
+                    pureBtn.textContent = pure ? '✨' : '👁️';
                 }
             });
         }
@@ -1079,24 +1742,27 @@
             requestAnimationFrame(animate);
             const dt = clock.getDelta();
 
-            // Rotation Logic
-            if (STATE.mode === 'SCATTER' && STATE.hand.detected) {
-                const targetRotY = STATE.hand.x * Math.PI * 0.9; 
-                const targetRotX = STATE.hand.y * Math.PI * 0.25;
-                STATE.rotation.y += (targetRotY - STATE.rotation.y) * 3.0 * dt;
-                STATE.rotation.x += (targetRotX - STATE.rotation.x) * 3.0 * dt;
+            // 增强手势跟手体验：散落与成树状态下，只要识别到手掌移动即可丝滑带动旋转！
+            if (STATE.hand.detected && STATE.mode !== 'FOCUS') {
+                const multY = STATE.mode === 'SCATTER' ? 1.05 : 0.65;
+                const targetRotY = -STATE.hand.x * Math.PI * multY;
+                const targetRotX = STATE.hand.y * Math.PI * 0.22;
+                STATE.rotation.y += (targetRotY - STATE.rotation.y) * 3.8 * dt;
+                STATE.rotation.x += (targetRotX - STATE.rotation.x) * 3.2 * dt;
             } else {
-                if(STATE.mode === 'TREE') {
+                if (STATE.mode === 'TREE') {
                     STATE.rotation.y += 0.3 * dt;
                     STATE.rotation.x += (0 - STATE.rotation.x) * 2.0 * dt;
                 } else {
-                      STATE.rotation.y += 0.1 * dt; 
+                    STATE.rotation.y += 0.1 * dt; 
                 }
             }
 
             mainGroup.rotation.y = STATE.rotation.y;
             mainGroup.rotation.x = STATE.rotation.x;
 
+            updateSnow(dt);
+            updateHandMagicFx(dt);
             particleSystem.forEach(p => p.update(dt, STATE.mode, STATE.focusTarget));
             composer.render();
         }

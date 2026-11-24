@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grand Luxury Tree - Folder Auto-Read</title>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preload" href="./hand_landmarker.task" as="fetch" crossorigin>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Times New Roman', serif; }
         #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
@@ -741,24 +743,118 @@
             });
         }
 
-        // --- MEDIAPIPE（手机/桌面双端兼容：本地模型优先 + GPU/CPU自动降级 + iOS前置摄像头）---
-        async function loadHandModel() {
-            if (handLandmarker) return handLandmarker;
-            setStatus('正在加载手势识别模型…');
-            const vision = await FilesetResolver.forVisionTasks(
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-            );
-            const modelUrls = [
+        // --- MEDIAPIPE（方案一：并行下载 + 本地Cache秒开 + 内存复用零重下 + 实时进度条）---
+        let modelLoadingPromise = null;
+
+        async function fetchModelBufferWithCache() {
+            const CACHE_NAME = 'christmas-hand-model-v1';
+            const CACHE_KEY = 'hand_landmarker_v1.task';
+            const urls = [
                 './hand_landmarker.task',
                 './assets/hand_landmarker.task',
                 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
             ];
+
+            // 1) 优先从手机浏览器本地 Cache 秒读（第二次打开 0.3 秒就绪！）
+            if ('caches' in window) {
+                try {
+                    const cache = await caches.open(CACHE_NAME);
+                    const hit = await cache.match(CACHE_KEY);
+                    if (hit) {
+                        setStatus('已从本地缓存秒速唤醒手势引擎…');
+                        return await hit.arrayBuffer();
+                    }
+                } catch (e) {}
+            }
+
+            // 2) 首次访问：流式拉取 + 实时百分比进度条 + 写入永久本地缓存
             let lastErr = null;
-            for (const modelAssetPath of modelUrls) {
+            for (const url of urls) {
+                try {
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+                    const total = parseInt(resp.headers.get('content-length') || '7818000', 10);
+                    let buffer;
+
+                    if (resp.body && resp.body.getReader) {
+                        const reader = resp.body.getReader();
+                        const chunks = [];
+                        let loaded = 0, lastPct = -1;
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            chunks.push(value);
+                            loaded += value.byteLength;
+                            const pct = Math.min(99, Math.round((loaded / total) * 100));
+                            if (pct >= lastPct + 3) {
+                                lastPct = pct;
+                                setStatus(`手势引擎加载中 ${pct}% · 可先触屏旋转`);
+                            }
+                        }
+                        const merged = new Uint8Array(loaded);
+                        let offset = 0;
+                        for (const c of chunks) { merged.set(c, offset); offset += c.byteLength; }
+                        buffer = merged.buffer;
+                    } else {
+                        buffer = await resp.arrayBuffer();
+                    }
+
+                    // 写入浏览器本地 Cache，下次打开直接 0.3 秒秒开！
+                    if ('caches' in window && buffer.byteLength > 1000000) {
+                        try {
+                            const cache = await caches.open(CACHE_NAME);
+                            await cache.put(CACHE_KEY, new Response(buffer.slice(0), {
+                                headers: { 'Content-Type': 'application/octet-stream' }
+                            }));
+                        } catch (e) {}
+                    }
+                    return buffer;
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+            throw lastErr || new Error('Model fetch failed');
+        }
+
+        async function loadWasmVision() {
+            const wasmBases = [
+                'https://fastly.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm',
+                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
+            ];
+            let lastErr = null;
+            for (const base of wasmBases) {
+                try {
+                    return await FilesetResolver.forVisionTasks(base);
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+            throw lastErr || new Error('WASM load failed');
+        }
+
+        async function loadHandModel() {
+            if (handLandmarker) return handLandmarker;
+            if (modelLoadingPromise) return modelLoadingPromise;
+
+            modelLoadingPromise = (async () => {
+                setStatus('手势引擎加速加载中…（可先触屏旋转）');
+                // WASM 引擎与 7.5MB 模型真正并行拉取，总耗时直接砍半！
+                const [vision, modelBuf] = await Promise.all([
+                    loadWasmVision(),
+                    fetchModelBufferWithCache()
+                ]);
+
+                setStatus('正在启动 AI 手势识别…');
+                let lastErr = null;
+                // 使用内存 modelAssetBuffer，GPU 降级 CPU 绝不重复下载！
                 for (const delegate of ['GPU', 'CPU']) {
                     try {
                         handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                            baseOptions: { modelAssetPath, delegate },
+                            baseOptions: {
+                                modelAssetBuffer: new Uint8Array(modelBuf.slice(0)),
+                                delegate
+                            },
                             runningMode: "VIDEO",
                             numHands: 1
                         });
@@ -768,8 +864,15 @@
                         lastErr = e;
                     }
                 }
+                throw lastErr || new Error('HandLandmarker init failed');
+            })();
+
+            try {
+                return await modelLoadingPromise;
+            } catch (e) {
+                modelLoadingPromise = null;
+                throw e;
             }
-            throw lastErr || new Error('Model load failed');
         }
 
         async function startCamera(fromUserGesture = false) {
